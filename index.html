@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ToastOps Enterprise v4.2.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0b0d;
+    --surface:#111318;
+    --surface2:#181c22;
+    --border:#1e2330;
+    --border2:#252d3d;
+    --text:#e8eaf0;
+    --muted:#5a6478;
+    --hint:#2e3547;
+    --green:#3ecf6e;
+    --green-dim:#1a3d2b;
+    --amber:#f0a843;
+    --amber-dim:#3d2c10;
+    --red:#e05252;
+    --red-dim:#3d1414;
+    --blue:#4a9eff;
+    --blue-dim:#0e2040;
+    --accent:#4a9eff;
+  }
+  html{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+  body{max-width:1100px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+
+  .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+  .logo-block{}
+  .logo{font-size:18px;font-weight:500;letter-spacing:-0.5px;color:var(--text)}
+  .logo em{color:var(--accent);font-style:normal}
+  .logo-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px}
+  .certs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:4px}
+  .cert{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 8px;border:1px solid var(--border2);border-radius:3px;color:var(--muted)}
+  .cert.ok{border-color:#1e3d28;color:var(--green)}
+  .uptime-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+  .metric{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 14px}
+  .metric-label{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+  .metric-val{font-size:24px;font-weight:500;color:var(--text);line-height:1;font-family:'IBM Plex Mono',monospace}
+  .metric-sub{font-size:10px;color:var(--muted);margin-top:4px}
+
+  .section-label{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+
+  .kanban{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:1.25rem}
+  .kstage{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px}
+  .kstage-title{font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .kcard{background:var(--bg);border:1px solid var(--border2);border-radius:4px;padding:7px 8px;font-size:11px;color:var(--text);margin-bottom:6px}
+  .kcard.active{border-color:var(--blue);background:var(--blue-dim)}
+  .kcard-id{font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:3px}
+  .kcard.active .kcard-id{color:var(--blue)}
+  .kempty{font-size:10px;color:var(--hint)}
+
+  .topo{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+  .svc{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 14px}
+  .svc-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px;display:flex;align-items:center;gap:6px}
+  .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .dot-g{background:var(--green)}.dot-a{background:var(--amber)}.dot-r{background:var(--red)}
+  .svc-ver{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px}
+  .svc-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:2px 0;border-bottom:1px solid var(--hint)}
+  .svc-row:last-child{border-bottom:none}
+  .svc-row span:last-child{color:var(--text);font-family:'IBM Plex Mono',monospace}
+  .svc-row .warn{color:var(--amber)}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px}
+
+  .sla-wrap{margin-bottom:10px}
+  .sla-meta{display:flex;justify-content:space-between;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:4px}
+  .sla-track{background:var(--hint);border-radius:3px;height:5px;width:100%}
+  .sla-fill{height:5px;border-radius:3px;transition:width 1s linear,background .5s}
+
+  .cost-num{font-size:26px;font-weight:500;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+  .cost-unit{font-size:11px;color:var(--muted);margin-bottom:10px}
+  .cost-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--hint)}
+  .cost-row:last-child{border-bottom:none}
+  .cost-row span:last-child{font-family:'IBM Plex Mono',monospace;color:var(--text)}
+  .cost-row.bad span:last-child{color:var(--red)}
+
+  .incident-box{border-radius:4px;padding:8px 10px;margin-bottom:8px;border:1px solid}
+  .incident-box.resolved{background:var(--green-dim);border-color:#1e3d28}
+  .incident-box.active{background:var(--red-dim);border-color:#3d1414}
+  .incident-title{font-size:11px;font-weight:500;margin-bottom:3px}
+  .incident-box.resolved .incident-title{color:var(--green)}
+  .incident-box.active .incident-title{color:var(--red)}
+  .incident-body{font-size:11px;color:var(--muted);line-height:1.5}
+
+  .btn-sm{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:3px 9px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--muted);cursor:pointer;margin-top:6px}
+  .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+  .postmortem{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px;font-size:11px;color:var(--muted);line-height:1.7;display:none;margin-top:8px}
+  .postmortem.visible{display:block}
+  .postmortem strong{color:var(--text);font-weight:500}
+
+  .log{font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.8;max-height:160px;overflow:hidden}
+  .log-line{display:block}
+  .log-ts{color:var(--hint)}
+  .log-info{color:var(--blue)}
+  .log-warn{color:var(--amber)}
+  .log-err{color:var(--red)}
+  .log-svc{color:var(--muted)}
+
+  .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:.25rem}
+  .btn{font-size:12px;font-family:'IBM Plex Mono',monospace;padding:8px 18px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--text);cursor:pointer;transition:border-color .15s,color .15s}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn:active{transform:scale(0.98)}
+  .btn.danger:hover{border-color:var(--red);color:var(--red)}
+  .status-msg{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted)}
+
+  .flash{animation:flash .4s ease}
+  @keyframes flash{0%,100%{opacity:1}50%{opacity:.3}}
+
+  @media(max-width:700px){
+    .metrics{grid-template-columns:repeat(2,1fr)}
+    .kanban{grid-template-columns:repeat(3,1fr)}
+    .topo,.two-col{grid-template-columns:1fr}
+    .certs{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-block">
+    <div class="logo">Toast<em>Ops</em> <span style="font-size:13px;font-weight:300;color:var(--muted)">Enterprise v4.2.1</span></div>
+    <div class="logo-sub">bread-orchestration-platform &nbsp;/&nbsp; prod-us-east-1 &nbsp;/&nbsp; kubernetes</div>
+  </div>
+  <div class="certs">
+    <span class="cert ok"><span class="uptime-dot"></span>All systems operational</span>
+    <span class="cert">SOC2 Type II</span>
+    <span class="cert">ISO 27001</span>
+    <span class="cert">HIPAA</span>
+    <span class="cert">GDPR</span>
+    <span class="cert">PCI-DSS</span>
+    <span class="cert">GLUTEN-FREE COMPLIANT</span>
+  </div>
+</div>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Toast throughput</div>
+    <div class="metric-val" id="throughput">2.3</div>
+    <div class="metric-sub">slices / hour</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">P99 latency</div>
+    <div class="metric-val" id="latency">94s</div>
+    <div class="metric-sub">toast pipeline</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Uptime</div>
+    <div class="metric-val">99.97%</div>
+    <div class="metric-sub">last 90 days</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Active toasters</div>
+    <div class="metric-val" id="active-toasters">1</div>
+    <div class="metric-sub">of 1 provisioned</div>
+  </div>
+</div>
+
+<div class="section-label">Toast pipeline — kanban view</div>
+<div class="kanban">
+  <div class="kstage">
+    <div class="kstage-title">Bread queued</div>
+    <div class="kcard" id="k0"><div class="kcard-id">TOAST-0041</div>Sourdough, 2-slice</div>
+  </div>
+  <div class="kstage">
+    <div class="kstage-title">Inserting</div>
+    <div class="kcard" id="k1"><div class="kcard-id">TOAST-0040</div>Multigrain, 1-slice</div>
+  </div>
+  <div class="kstage">
+    <div class="kstage-title">Toasting</div>
+    <div class="kcard active" id="k2"><div class="kcard-id">TOAST-0039</div>White bread, darkness=3</div>
+  </div>
+  <div class="kstage">
+    <div class="kstage-title">Eject pending</div>
+    <div class="kempty" id="k3-empty">No items</div>
+    <div class="kcard" id="k3" style="display:none"><div class="kcard-id">—</div></div>
+  </div>
+  <div class="kstage">
+    <div class="kstage-title">Butter phase</div>
+    <div class="kempty" id="k4-empty">Awaiting eject</div>
+    <div class="kcard" id="k4" style="display:none"><div class="kcard-id">—</div></div>
+  </div>
+  <div class="kstage">
+    <div class="kstage-title">Consumed</div>
+    <div class="kcard" id="k5a"><div class="kcard-id">TOAST-0038</div>Rye, 1-slice — 08:14</div>
+    <div class="kcard" id="k5b"><div class="kcard-id">TOAST-0037</div>White, 2-slice — 07:52</div>
+  </div>
+</div>
+
+<div class="section-label">Service topology</div>
+<div class="topo">
+  <div class="svc">
+    <div class="svc-name"><span class="dot dot-g"></span>toaster-svc</div>
+    <div class="svc-ver">v2.1.4 · port 8080 · 3 replicas</div>
+    <div class="svc-row"><span>CPU</span><span id="cpu">4%</span></div>
+    <div class="svc-row"><span>Heating element</span><span id="temp">847°C</span></div>
+    <div class="svc-row"><span>Darkness range</span><span>1–5 (max enforced)</span></div>
+    <div class="svc-row"><span>Req/min</span><span>0.04</span></div>
+    <div class="svc-row"><span>Circuit breaker</span><span>CLOSED</span></div>
+  </div>
+  <div class="svc">
+    <div class="svc-name"><span class="dot dot-g"></span>butter-svc</div>
+    <div class="svc-ver">v1.0.9 · port 8081 · 1 replica</div>
+    <div class="svc-row"><span>CPU</span><span>0%</span></div>
+    <div class="svc-row"><span>State</span><span>Idle (cold)</span></div>
+    <div class="svc-row"><span>Butter temp</span><span>18°C (ambient)</span></div>
+    <div class="svc-row"><span>Spread speed</span><span>12mm/s</span></div>
+    <div class="svc-row"><span>Dairy cert</span><span>VALID</span></div>
+  </div>
+  <div class="svc">
+    <div class="svc-name"><span class="dot dot-a"></span>plate-svc</div>
+    <div class="svc-ver">v3.0.1 · port 8082 · 2 replicas</div>
+    <div class="svc-row"><span>CPU</span><span>0%</span></div>
+    <div class="svc-row"><span>Capacity</span><span>2 slices max</span></div>
+    <div class="svc-row"><span>Crumb load</span><span class="warn">34% — advisory</span></div>
+    <div class="svc-row"><span>Material</span><span>ceramic (v1)</span></div>
+    <div class="svc-row"><span>Status</span><span class="warn">Degraded</span></div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <div class="section-label" style="margin-bottom:10px">SLA compliance</div>
+    <div class="sla-wrap">
+      <div class="sla-meta">
+        <span>Toast-to-plate latency</span>
+        <span id="sla1-label">94s / 120s target</span>
+      </div>
+      <div class="sla-track"><div class="sla-fill" id="sla1-fill" style="width:78%;background:var(--green)"></div></div>
+    </div>
+    <div class="sla-wrap" style="margin-top:10px">
+      <div class="sla-meta">
+        <span>Butter application latency</span>
+        <span>0s / 30s target</span>
+      </div>
+      <div class="sla-track"><div class="sla-fill" style="width:0%;background:var(--green)"></div></div>
+    </div>
+    <div class="sla-wrap" style="margin-top:10px">
+      <div class="sla-meta">
+        <span>Crumb clearance SLA</span>
+        <span class="warn" id="crumb-label">34% — cleaning overdue</span>
+      </div>
+      <div class="sla-track"><div class="sla-fill" style="width:34%;background:var(--amber)"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:8px">Cost analysis</div>
+    <div class="cost-num" id="cost-val">$0.0003</div>
+    <div class="cost-unit">estimated cost per slice</div>
+    <div class="cost-row"><span>Electricity</span><span>$0.00028</span></div>
+    <div class="cost-row"><span>Plate depreciation</span><span>$0.000018</span></div>
+    <div class="cost-row"><span>Butter API call</span><span>$0.0000024</span></div>
+    <div class="cost-row"><span>Kubernetes overhead</span><span>$0.80</span></div>
+    <div class="cost-row bad"><span>Observability (Datadog)</span><span>$2.40</span></div>
+    <div class="cost-row bad"><span>On-call retainer</span><span>$1.20</span></div>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted)">Note: infrastructure costs are 14,666x the toast cost. This is normal.</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <div class="section-label" style="margin-bottom:10px">Incident log</div>
+    <div class="incident-box resolved">
+      <div class="incident-title">RESOLVED · INC-0017 · P0</div>
+      <div class="incident-body">Toast darkness exceeded threshold (darkness=6). Bread blackened. Smoke detected by plate-svc. MTTR: 4 minutes.</div>
+      <button class="btn-sm" onclick="togglePostmortem()">View postmortem</button>
+      <div class="postmortem" id="postmortem">
+        <strong>Incident postmortem — INC-0017</strong><br><br>
+        <strong>Root cause:</strong> toaster-svc accepted darkness=6 without validation. No upper bound enforced in v2.1.3.<br><br>
+        <strong>Timeline:</strong><br>
+        07:34:00 — TOAST-0036 inserted, darkness=6<br>
+        07:36:12 — plate-svc smoke sensor threshold breached<br>
+        07:36:14 — P0 declared, PagerDuty fired, 3 engineers woken<br>
+        07:38:00 — bread ejected manually<br>
+        07:40:02 — incident resolved, windows opened<br><br>
+        <strong>Action items:</strong><br>
+        (1) Add darkness validator, max=5 — owner: @breadops<br>
+        (2) Implement smoke-based circuit breaker — owner: @toaster-platform<br>
+        (3) Add "sniff test" step to runbook — owner: @on-call-rotation<br><br>
+        MTTR: 4 minutes. Severity: P0. Slices lost: 1.
+      </div>
+    </div>
+    <div class="incident-box resolved" style="margin-bottom:0">
+      <div class="incident-title">RESOLVED · INC-0014 · P2</div>
+      <div class="incident-body">butter-svc cold start latency spike (44s). SLA breached. Root cause: butter was in fridge.</div>
+    </div>
+    <div id="live-incident" style="display:none;margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:8px">Live logs</div>
+    <div class="log" id="log-box"></div>
+  </div>
+</div>
+
+<div class="actions" style="margin-top:1rem">
+  <button class="btn" onclick="scheduleToast()">+ Schedule toast</button>
+  <button class="btn danger" onclick="triggerIncident()">Simulate burn event</button>
+  <button class="btn" onclick="sendPrompt('Write the full DEV post for ToastOps Enterprise')">Generate DEV post ↗</button>
+  <span class="status-msg" id="status-msg">System nominal. 1 slice in progress.</span>
+</div>
+
+<script>
+const logs = [
+  ['08:41:02','info','toaster-svc','Slice inserted. darkness=3. Estimated eject: T+90s'],
+  ['08:41:01','info','butter-svc','Standing by. Butter temp: 18°C (ambient)'],
+  ['08:41:00','info','plate-svc','Crumb accumulation 34%. Cleaning advisory issued.'],
+  ['08:40:47','warn','toaster-svc','Heating element variance ±2°C. Within tolerance.'],
+  ['08:40:30','info','orchestrator','TOAST-0039 transitioned INSERTING -> TOASTING'],
+  ['08:40:29','info','orchestrator','TOAST-0040 transitioned BREAD_QUEUED -> INSERTING'],
+  ['08:38:11','info','butter-svc','TOAST-0038 butter phase complete. Spread: 94%.'],
+  ['08:14:02','info','orchestrator','TOAST-0038 CONSUMED. Lifecycle complete.'],
+];
+
+function renderLogs(){
+  document.getElementById('log-box').innerHTML = logs.slice(0,10).map(([ts,lv,svc,msg])=>
+    `<span class="log-line"><span class="log-ts">${ts}</span> <span class="log-${lv==='info'?'info':lv==='warn'?'warn':'err'}">[${lv.toUpperCase()}]</span> <span class="log-svc">${svc}</span> ${msg}</span>`
+  ).join('');
+}
+renderLogs();
+
+let toastCount=41;
+let slaElapsed=94;
+
+function now(){return new Date().toTimeString().slice(0,8)}
+
+function scheduleToast(){
+  toastCount++;
+  const id=`TOAST-00${toastCount}`;
+  const ts=now();
+  const breads=['Sourdough','White bread','Multigrain','Rye','Brioche','Pumpernickel','Whole wheat'];
+  const bread=breads[Math.floor(Math.random()*breads.length)];
+  const dark=Math.floor(Math.random()*3)+2;
+  logs.unshift([ts,'info','orchestrator',`${id} scheduled. Bread: ${bread}, darkness=${dark}`]);
+  logs.unshift([ts,'info','toaster-svc',`Accepting ${id} into queue. ETA: T+${60+Math.floor(Math.random()*60)}s`]);
+  renderLogs();
+  document.getElementById('status-msg').textContent=`${id} queued. Pipeline updated.`;
+  document.getElementById('throughput').textContent=(Math.random()*1.5+2).toFixed(1);
+  slaElapsed=0;
+  const el=document.getElementById('k0');
+  el.querySelector('.kcard-id').textContent=id;
+  el.querySelector('div:last-child') && (el.childNodes[1].textContent=`${bread}, darkness=${dark}`);
+  el.classList.add('flash');
+  setTimeout(()=>el.classList.remove('flash'),500);
+}
+
+function triggerIncident(){
+  const ts=now();
+  const incId=`INC-00${18+Math.floor(Math.random()*10)}`;
+  logs.unshift([ts,'err','toaster-svc','CRITICAL: darkness=7 detected. Smoke threshold breached.']);
+  logs.unshift([ts,'err','orchestrator',`P0 declared. ${incId} opened. PagerDuty notified. 3 engineers paged.`]);
+  logs.unshift([ts,'warn','plate-svc','Smoke particle count elevated. Initiating ventilation runbook.']);
+  renderLogs();
+  document.getElementById('active-toasters').textContent='0';
+  document.getElementById('status-msg').textContent=`P0 ${incId} active. Bread lost. Engineers awoken.`;
+  const li=document.getElementById('live-incident');
+  li.style.display='block';
+  li.innerHTML=`<div class="incident-box active"><div class="incident-title">ACTIVE · ${incId} · P0</div><div class="incident-body">Toast darkness=7 detected. Smoke breach. toaster-svc circuit breaker OPEN. On-call paged.</div></div>`;
+  setTimeout(()=>{
+    const ts2=now();
+    logs.unshift([ts2,'info','orchestrator',`${incId} resolved. Toaster restarted. Windows opened. MTTR: 3 minutes.`]);
+    renderLogs();
+    document.getElementById('active-toasters').textContent='1';
+    document.getElementById('status-msg').textContent=`${incId} resolved. Postmortem due Friday.`;
+    li.innerHTML=`<div class="incident-box resolved"><div class="incident-title">RESOLVED · ${incId} · P0</div><div class="incident-body">Toaster restarted. Bread discarded. MTTR: 3 minutes. Postmortem pending.</div></div>`;
+  },3500);
+}
+
+function togglePostmortem(){
+  document.getElementById('postmortem').classList.toggle('visible');
+}
+
+setInterval(()=>{
+  slaElapsed=Math.min(slaElapsed+1,140);
+  const pct=Math.min(Math.round((slaElapsed/120)*100),100);
+  const fill=document.getElementById('sla1-fill');
+  fill.style.width=pct+'%';
+  fill.style.background=slaElapsed>120?'var(--red)':slaElapsed>90?'var(--amber)':'var(--green)';
+  document.getElementById('sla1-label').textContent=
+    slaElapsed>120?`${slaElapsed}s / 120s — SLA BREACH`:`${slaElapsed}s / 120s target`;
+  document.getElementById('latency').textContent=slaElapsed+'s';
+},1000);
+
+setInterval(()=>{
+  const cpu=document.getElementById('cpu');
+  const c=parseInt(cpu.textContent);
+  cpu.textContent=Math.max(1,Math.min(14,c+Math.floor(Math.random()*5-2)))+'%';
+  const tmp=document.getElementById('temp');
+  const t=parseInt(tmp.textContent);
+  tmp.textContent=Math.max(820,Math.min(875,t+Math.floor(Math.random()*10-5)))+'°C';
+},2000);
+</script>
+</body>
+</html>
